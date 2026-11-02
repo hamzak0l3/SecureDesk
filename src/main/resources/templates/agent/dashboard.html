@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Agent — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar & Topbar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU ======================== -->
+<div class="sd-main">
+    <div class="sd-content">
+
+        <!-- Page header -->
+        <div class="sd-page-header">
+            <h1 class="sd-page-title"><i class="bi bi-headset"></i> Espace Agent de Support</h1>
+            <p class="sd-page-subtitle">Suivi et résolution de vos tickets assignés</p>
+        </div>
+
+        <!-- ═══ Stat Cards ═══ -->
+        <div class="sd-grid sd-grid-4 mb-24">
+            <!-- Total assignés -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon primary"><i class="bi bi-ticket-detailed-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${totalAssigned}">0</div>
+                    <div class="sd-stat-label">Tickets assignés</div>
+                </div>
+            </div>
+            <!-- En cours -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon warning"><i class="bi bi-hourglass-split"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${inProgressCount}">0</div>
+                    <div class="sd-stat-label">En cours</div>
+                </div>
+            </div>
+            <!-- Résolus -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon success"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${resolvedCount}">0</div>
+                    <div class="sd-stat-label">Résolus</div>
+                </div>
+            </div>
+            <!-- Fermés / En attente -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon info"><i class="bi bi-envelope-open-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${openCount}">0</div>
+                    <div class="sd-stat-label">Nouveaux ouverts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Visualisation Graphique (Donut Chart & Performance) ═══ -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+            <!-- Donut Chart -->
+            <div class="sd-card">
+                <div class="sd-card-header">
+                    <span>Répartition de mes tickets</span>
+                </div>
+                <div class="sd-card-body">
+                    <div class="sd-donut-wrap">
+                        <div class="sd-donut" id="agentDonut"
+                             th:attr="data-open=${openCount},
+                                      data-progress=${inProgressCount},
+                                      data-resolved=${resolvedCount},
+                                      data-closed=${closedCount}">
+                            <div class="sd-donut-center">
+                                <div class="sd-donut-center-value" th:text="${totalAssigned}">0</div>
+                                <div class="sd-donut-center-label">Assignés</div>
+                            </div>
+                        </div>
+                        <div class="sd-donut-legend">
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#06b6d4;"></span> Ouverts
+                            </div>
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#3b82f6;"></span> En cours
+                            </div>
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#22c55e;"></span> Résolus
+                            </div>
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#94a3b8;"></span> Fermés
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Taux de résolution & actions rapides -->
+            <div class="sd-card">
+                <div class="sd-card-header">
+                    <span>Performance & Objectifs</span>
+                </div>
+                <div class="sd-card-body" style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="sd-progress-item">
+                        <span class="sd-progress-label">Résolution</span>
+                        <div class="sd-progress-bar">
+                            <div class="sd-progress-fill success"
+                                 th:style="'width: ' + (${totalAssigned > 0 ? (resolvedCount * 100 / totalAssigned) : 0}) + '%;'"></div>
+                        </div>
+                        <span class="sd-progress-value"
+                              th:text="(${totalAssigned > 0 ? (resolvedCount * 100 / totalAssigned) : 0}) + '%'">0%</span>
+                    </div>
+
+                    <div class="sd-progress-item">
+                        <span class="sd-progress-label">En cours</span>
+                        <div class="sd-progress-bar">
+                            <div class="sd-progress-fill primary"
+                                 th:style="'width: ' + (${totalAssigned > 0 ? (inProgressCount * 100 / totalAssigned) : 0}) + '%;'"></div>
+                        </div>
+                        <span class="sd-progress-value"
+                              th:text="(${totalAssigned > 0 ? (inProgressCount * 100 / totalAssigned) : 0}) + '%'">0%</span>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; gap: 10px;">
+                        <a th:href="@{/tickets}" class="sd-btn sd-btn-primary sd-btn-block">
+                            <i class="bi bi-list-check"></i> Traiter les tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Tableau des tickets assignés ═══ -->
+        <div class="sd-card">
+            <div class="sd-card-header">
+                <span>Tickets assignés récemment</span>
+                <span class="sd-badge sd-badge-agent" th:text="${assignedTickets != null ? assignedTickets.size() : 0} + ' ticket(s)'">0</span>
+            </div>
+            <div class="sd-card-body" style="padding: 0;">
+                <div th:if="${assignedTickets != null and !assignedTickets.isEmpty()}" style="overflow-x: auto;">
+                    <table class="sd-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Sujet</th>
+                                <th>Demandeur</th>
+                                <th>Priorité</th>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="t : ${assignedTickets}">
+                                <td><span style="font-weight: 600; font-family: monospace;" th:text="'#TCK-' + ${t.id}">#1</span></td>
+                                <td>
+                                    <a th:href="@{/tickets/{id}(id=${t.id})}" style="font-weight: 600; color: var(--text-heading);" th:text="${t.title}">Titre</a>
+                                </td>
+                                <td>
+                                    <div class="sd-table-user">
+                                        <div class="sd-table-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"
+                                             th:text="${t.createdBy != null ? #strings.toUpperCase(#strings.substring(t.createdBy.fullName, 0, 1)) : 'C'}">C</div>
+                                        <div class="sd-table-user-info">
+                                            <div class="sd-table-user-name" th:text="${t.createdBy != null ? t.createdBy.fullName : 'Client'}">Nom</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="sd-badge"
+                                          th:classappend="${t.priority.name() == 'LOW'} ? 'sd-badge-low' :
+                                                          (${t.priority.name() == 'MEDIUM'} ? 'sd-badge-medium' :
+                                                          (${t.priority.name() == 'HIGH'} ? 'sd-badge-high' : 'sd-badge-critical'))"
+                                          th:text="${t.priority.displayLabel}">Priorité</span>
+                                </td>
+                                <td>
+                                    <span class="sd-badge"
+                                          th:classappend="${t.status.name() == 'OPEN'} ? 'sd-badge-open' :
+                                                          (${t.status.name() == 'IN_PROGRESS'} ? 'sd-badge-in-progress' :
+                                                          (${t.status.name() == 'RESOLVED'} ? 'sd-badge-resolved' : 'sd-badge-closed'))"
+                                          th:text="${t.status.displayLabel}">Statut</span>
+                                </td>
+                                <td style="color: var(--text-secondary); font-size: 13px;"
+                                    th:text="${#temporals.format(t.createdAt, 'dd/MM/yy HH:mm')}">01/01/24</td>
+                                <td style="text-align: right;">
+                                    <a th:href="@{/tickets/{id}(id=${t.id})}" class="sd-btn sd-btn-outline sd-btn-sm">
+                                        <i class="bi bi-pencil-square"></i> Traiter
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${assignedTickets == null or assignedTickets.isEmpty()}" class="sd-empty">
+                    <i class="bi bi-check2-circle" style="color: var(--success);"></i>
+                    <p>Aucun ticket en attente d'assignation pour votre compte.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sd-footer">
+            &copy; 2024 SecureDesk &mdash; Projet DevSecOps HelpDesk
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('nav-agent-dash');
+        if (el) el.classList.add('active');
+
+        var donut = document.getElementById('agentDonut');
+        if (donut) {
+            var open = parseInt(donut.getAttribute('data-open')) || 0;
+            var progress = parseInt(donut.getAttribute('data-progress')) || 0;
+            var resolved = parseInt(donut.getAttribute('data-resolved')) || 0;
+            var closed = parseInt(donut.getAttribute('data-closed')) || 0;
+            var total = open + progress + resolved + closed;
+
+            if (total > 0) {
+                var p1 = (open / total) * 100;
+                var p2 = p1 + (progress / total) * 100;
+                var p3 = p2 + (resolved / total) * 100;
+                donut.style.background = 'conic-gradient(#06b6d4 0% ' + p1 + '%, #3b82f6 ' + p1 + '% ' + p2 + '%, #22c55e ' + p2 + '% ' + p3 + '%, #94a3b8 ' + p3 + '% 100%)';
+            } else {
+                donut.style.background = 'conic-gradient(#e2e8f0 0% 100%)';
+            }
+        }
+    });
+</script>
+</body>
+</html>

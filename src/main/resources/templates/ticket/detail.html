@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Ticket #' + ${ticket.id} + ' — SecureDesk'">Ticket — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar & Topbar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU ======================== -->
+<div class="sd-main">
+    <div class="sd-content">
+
+        <!-- Back Button & Breadcrumb -->
+        <div style="margin-bottom: 20px;">
+            <a th:href="@{/tickets}" class="sd-btn sd-btn-outline sd-btn-sm">
+                <i class="bi bi-arrow-left"></i> Retour aux tickets
+            </a>
+        </div>
+
+        <!-- Flash messages -->
+        <div th:if="${successMessage}" class="sd-alert sd-alert-success">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${successMessage}">Succès</span>
+            <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        <div th:if="${errorMessage}" class="sd-alert sd-alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${errorMessage}">Erreur</span>
+            <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+
+        <!-- Layout 2 colonnes : Détails/Commentaires (gauche) & Actions/Métadonnées (droite) -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+
+            <!-- Colonne Principale -->
+            <div>
+                <!-- Ticket Main Card -->
+                <div class="sd-card mb-24">
+                    <div class="sd-card-header" style="text-transform: none;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: monospace; font-size: 15px; font-weight: 700; color: var(--primary);"
+                                  th:text="'#TCK-' + ${ticket.id}">#TCK-1</span>
+                            <span class="sd-badge"
+                                  th:classappend="${ticket.status.name() == 'OPEN'} ? 'sd-badge-open' :
+                                                  (${ticket.status.name() == 'IN_PROGRESS'} ? 'sd-badge-in-progress' :
+                                                  (${ticket.status.name() == 'RESOLVED'} ? 'sd-badge-resolved' : 'sd-badge-closed'))"
+                                  th:text="${ticket.status.displayLabel}">Statut</span>
+                            <span class="sd-badge"
+                                  th:classappend="${ticket.priority.name() == 'LOW'} ? 'sd-badge-low' :
+                                                  (${ticket.priority.name() == 'MEDIUM'} ? 'sd-badge-medium' :
+                                                  (${ticket.priority.name() == 'HIGH'} ? 'sd-badge-high' : 'sd-badge-critical'))"
+                                  th:text="${ticket.priority.displayLabel}">Priorité</span>
+                        </div>
+                    </div>
+                    <div class="sd-card-body">
+                        <!-- Titre -->
+                        <h2 style="font-size: 20px; font-weight: 700; color: var(--text-heading); margin-top: 0; margin-bottom: 16px;"
+                            th:text="${ticket.title}">Titre du ticket</h2>
+
+                        <!-- Description Box -->
+                        <div class="sd-form-label"><i class="bi bi-text-paragraph"></i> Description</div>
+                        <div class="sd-description" th:text="${ticket.description}">Description détaillée du problème...</div>
+                    </div>
+                </div>
+
+                <!-- Section Commentaires -->
+                <div class="sd-card mb-24">
+                    <div class="sd-card-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-chat-left-text-fill text-primary-c"></i>
+                            <span>Fil de discussion</span>
+                        </div>
+                        <span class="sd-badge sd-badge-in-progress" th:text="${comments != null ? comments.size() : 0} + ' message(s)'">0</span>
+                    </div>
+
+                    <div class="sd-card-body">
+                        <!-- Liste des commentaires existants -->
+                        <div th:if="${comments != null and !comments.isEmpty()}">
+                            <div th:each="comment : ${comments}" class="sd-comment">
+                                <div class="sd-comment-avatar"
+                                     th:text="${comment.author != null ? #strings.toUpperCase(#strings.substring(comment.author.fullName, 0, 1)) : '?'}">A</div>
+                                <div class="sd-comment-body">
+                                    <div class="sd-comment-header">
+                                        <span class="sd-comment-author" th:text="${comment.author != null ? comment.author.fullName : 'Anonyme'}">Auteur</span>
+                                        <span class="sd-comment-date"
+                                              th:text="${#temporals.format(comment.createdAt, 'dd/MM/yyyy à HH:mm')}">Date</span>
+                                    </div>
+                                    <div class="sd-comment-content" th:text="${comment.content}">Commentaire...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aucun commentaire -->
+                        <div th:if="${comments == null or comments.isEmpty()}" class="sd-empty" style="padding: 30px 0;">
+                            <i class="bi bi-chat-square-dots" style="font-size: 32px;"></i>
+                            <p style="font-size: 14px;">Aucun commentaire pour le moment.</p>
+                        </div>
+
+                        <hr class="sd-divider">
+
+                        <!-- Formulaire Nouveau Commentaire -->
+                        <form th:action="@{/tickets/{id}/comment(id=${ticket.id})}" method="post">
+                            <div class="sd-form-group">
+                                <label for="commentContent" class="sd-form-label">
+                                    <i class="bi bi-reply-fill"></i> Ajouter une réponse
+                                </label>
+                                <textarea id="commentContent" name="content" class="sd-form-control" rows="3"
+                                          placeholder="Écrivez votre message ici..." required></textarea>
+                            </div>
+                            <button type="submit" class="sd-btn sd-btn-primary">
+                                <i class="bi bi-send-fill"></i> Envoyer le message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne Latérale (Informations & Gestion) -->
+            <div>
+                <!-- Carte Métadonnées -->
+                <div class="sd-card mb-24">
+                    <div class="sd-card-header">
+                        <span>Détails & Propriétés</span>
+                    </div>
+                    <div class="sd-card-body" style="padding: 16px 20px;">
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Demandeur</div>
+                            <div class="sd-info-value" style="display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-person-fill text-primary-c"></i>
+                                <span th:text="${ticket.createdBy != null ? ticket.createdBy.fullName : '—'}">Nom</span>
+                            </div>
+                        </div>
+
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Assigné à</div>
+                            <div class="sd-info-value" style="display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-headset text-info-c"></i>
+                                <span th:text="${ticket.assignedTo != null ? ticket.assignedTo.fullName : 'Non assigné'}"
+                                      th:style="${ticket.assignedTo == null ? 'color: var(--text-muted); font-style: italic;' : ''}">Agent</span>
+                            </div>
+                        </div>
+
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Catégorie</div>
+                            <div class="sd-info-value" style="display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-tag-fill text-warning-c"></i>
+                                <span th:text="${ticket.category != null ? ticket.category.name : 'Non classé'}">Catégorie</span>
+                            </div>
+                        </div>
+
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Date de création</div>
+                            <div class="sd-info-value" th:text="${#temporals.format(ticket.createdAt, 'dd/MM/yyyy HH:mm')}">Date</div>
+                        </div>
+
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Dernière mise à jour</div>
+                            <div class="sd-info-value" th:text="${ticket.updatedAt != null ? #temporals.format(ticket.updatedAt, 'dd/MM/yyyy HH:mm') : '—'}">Date</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carte Gestion / Actions Support (Réservé Agent & Admin) -->
+                <div class="sd-card mb-24" sec:authorize="hasAnyRole('AGENT', 'ADMIN')">
+                    <div class="sd-card-header">
+                        <span><i class="bi bi-gear-fill"></i> Gestion Support</span>
+                    </div>
+                    <div class="sd-card-body">
+                        <!-- Changer le statut -->
+                        <form th:action="@{/tickets/{id}/status(id=${ticket.id})}" method="post" class="mb-20">
+                            <div class="sd-form-group">
+                                <label for="statusSelect" class="sd-form-label">Changer le statut</label>
+                                <select id="statusSelect" name="status" class="sd-form-select" required>
+                                    <option th:each="st : ${statuses}"
+                                            th:value="${st.name()}"
+                                            th:text="${st.displayLabel}"
+                                            th:selected="${ticket.status == st}">Ouvert</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="sd-btn sd-btn-warning sd-btn-block">
+                                <i class="bi bi-check-lg"></i> Mettre à jour le statut
+                            </button>
+                        </form>
+
+                        <hr class="sd-divider">
+
+                        <!-- Assigner un agent -->
+                        <form th:action="@{/tickets/{id}/assign(id=${ticket.id})}" method="post">
+                            <div class="sd-form-group">
+                                <label for="agentSelect" class="sd-form-label">Assigner à un agent</label>
+                                <select id="agentSelect" name="agentId" class="sd-form-select" required>
+                                    <option value="">-- Sélectionner un agent --</option>
+                                    <option th:each="ag : ${agents}"
+                                            th:value="${ag.id}"
+                                            th:text="${ag.fullName}"
+                                            th:selected="${ticket.assignedTo != null and ticket.assignedTo.id == ag.id}">Agent</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="sd-btn sd-btn-primary sd-btn-block">
+                                <i class="bi bi-person-check-fill"></i> Assigner le ticket
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sd-footer">
+            &copy; 2024 SecureDesk &mdash; Projet DevSecOps HelpDesk
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('nav-tickets');
+        if (el) el.classList.add('active');
+    });
+</script>
+</body>
+</html>

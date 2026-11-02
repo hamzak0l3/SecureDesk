@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickets — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar & Topbar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU ======================== -->
+<div class="sd-main">
+    <div class="sd-content">
+
+        <!-- En-tête & Action principale -->
+        <div class="sd-section-header">
+            <div>
+                <h1 class="sd-page-title"><i class="bi bi-ticket-detailed-fill"></i> Gestion des Tickets</h1>
+                <p class="sd-page-subtitle">Consultez, filtrez et suivez le traitement des tickets</p>
+            </div>
+            <div sec:authorize="hasRole('CLIENT')">
+                <a th:href="@{/tickets/create}" class="sd-btn sd-btn-primary sd-btn-lg">
+                    <i class="bi bi-plus-circle-fill"></i> Nouveau Ticket
+                </a>
+            </div>
+        </div>
+
+        <!-- Messages Flash -->
+        <div th:if="${successMessage}" class="sd-alert sd-alert-success">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${successMessage}">Succès</span>
+            <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        <div th:if="${errorMessage}" class="sd-alert sd-alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${errorMessage}">Erreur</span>
+            <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+
+        <!-- Barre de recherche et filtres de style moderne -->
+        <div class="sd-card mb-24">
+            <div class="sd-card-body" style="padding: 16px 24px;">
+                <form th:action="@{/tickets/search}" method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 260px; position: relative;">
+                        <i class="bi bi-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                        <input type="text" name="query" class="sd-form-control" style="padding-left: 38px;"
+                               placeholder="Rechercher par titre ou mot-clé..."
+                               th:value="${searchQuery}">
+                    </div>
+                    <button type="submit" class="sd-btn sd-btn-primary">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                    <a th:href="@{/tickets}" class="sd-btn sd-btn-secondary" title="Réinitialiser">
+                        <i class="bi bi-arrow-clockwise"></i> Tout voir
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tableau des Issues (inspiré du design) -->
+        <div class="sd-card">
+            <div class="sd-card-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>Tickets & Demandes</span>
+                    <span class="sd-badge sd-badge-in-progress" th:text="${tickets != null ? tickets.size() : 0} + ' ticket(s)'">0 ticket(s)</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <span class="sd-btn sd-btn-outline sd-btn-sm" style="pointer-events: none;">
+                        <i class="bi bi-calendar3"></i> Aujourd'hui
+                    </span>
+                </div>
+            </div>
+
+            <div class="sd-card-body" style="padding: 0;">
+                <div th:if="${tickets != null and !tickets.isEmpty()}" style="overflow-x: auto;">
+                    <table class="sd-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;"><input type="checkbox" disabled></th>
+                                <th>ID</th>
+                                <th>Titre / Sujet</th>
+                                <th>Assigné à</th>
+                                <th>Demandeur</th>
+                                <th>Priorité</th>
+                                <th>Statut</th>
+                                <th>Créé le</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ticket : ${tickets}">
+                                <td style="text-align: center;"><input type="checkbox"></td>
+                                <td>
+                                    <span style="font-weight: 600; font-family: monospace; color: var(--text-heading);"
+                                          th:text="'#TCK-' + ${ticket.id}">#TCK-1</span>
+                                </td>
+                                <td>
+                                    <div style="max-width: 280px;">
+                                        <a th:href="@{/tickets/{id}(id=${ticket.id})}"
+                                           style="font-weight: 600; color: var(--text-heading); display: block;"
+                                           th:text="${ticket.title}">Titre</a>
+                                        <small style="color: var(--text-muted); font-size: 12px;"
+                                               th:text="${ticket.category != null ? ticket.category.name : 'Général'}">Catégorie</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="sd-table-user">
+                                        <div class="sd-table-avatar" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);"
+                                             th:text="${ticket.assignedTo != null ? #strings.toUpperCase(#strings.substring(ticket.assignedTo.fullName, 0, 1)) : '?'}">?</div>
+                                        <div class="sd-table-user-info">
+                                            <div class="sd-table-user-name"
+                                                 th:text="${ticket.assignedTo != null ? ticket.assignedTo.fullName : 'Non assigné'}">Non assigné</div>
+                                            <div class="sd-table-user-role"
+                                                 th:text="${ticket.assignedTo != null ? 'Agent Support' : 'En attente'}">Support</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="sd-table-user">
+                                        <div class="sd-table-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"
+                                             th:text="${ticket.createdBy != null ? #strings.toUpperCase(#strings.substring(ticket.createdBy.fullName, 0, 1)) : 'C'}">C</div>
+                                        <div class="sd-table-user-info">
+                                            <div class="sd-table-user-name"
+                                                 th:text="${ticket.createdBy != null ? ticket.createdBy.fullName : 'Client'}">Client</div>
+                                            <div class="sd-table-user-role"
+                                                 th:text="${ticket.createdBy != null ? '@' + ticket.createdBy.username : ''}">@client</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="sd-badge"
+                                          th:classappend="${ticket.priority.name() == 'LOW'} ? 'sd-badge-low' :
+                                                          (${ticket.priority.name() == 'MEDIUM'} ? 'sd-badge-medium' :
+                                                          (${ticket.priority.name() == 'HIGH'} ? 'sd-badge-high' : 'sd-badge-critical'))"
+                                          th:text="${ticket.priority.displayLabel}">
+                                        Moyenne
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="sd-badge"
+                                          th:classappend="${ticket.status.name() == 'OPEN'} ? 'sd-badge-open' :
+                                                          (${ticket.status.name() == 'IN_PROGRESS'} ? 'sd-badge-in-progress' :
+                                                          (${ticket.status.name() == 'RESOLVED'} ? 'sd-badge-resolved' : 'sd-badge-closed'))"
+                                          th:text="${ticket.status.displayLabel}">
+                                        Ouvert
+                                    </span>
+                                </td>
+                                <td style="color: var(--text-secondary); font-size: 13px;"
+                                    th:text="${#temporals.format(ticket.createdAt, 'dd/MM/yy HH:mm')}">01/01/24</td>
+                                <td style="text-align: right;">
+                                    <a th:href="@{/tickets/{id}(id=${ticket.id})}" class="sd-btn sd-btn-outline sd-btn-sm" title="Consulter le ticket">
+                                        <i class="bi bi-eye"></i> Détails
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${tickets == null or tickets.isEmpty()}" class="sd-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>Aucun ticket trouvé.</p>
+                    <a th:href="@{/tickets/create}" class="sd-btn sd-btn-primary" style="margin-top: 14px;" sec:authorize="hasRole('CLIENT')">
+                        <i class="bi bi-plus-lg"></i> Créer le premier ticket
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sd-footer">
+            &copy; 2024 SecureDesk &mdash; Projet DevSecOps HelpDesk
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('nav-tickets');
+        if (el) el.classList.add('active');
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Theme toggle (top-right) -->
+<div class="sd-auth-theme-toggle">
+    <button class="sd-topbar-btn theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+        <i class="bi bi-moon-fill"></i>
+        <i class="bi bi-sun-fill"></i>
+    </button>
+</div>
+
+<div class="sd-auth-page">
+    <div class="sd-auth-container">
+        <div class="sd-auth-card">
+
+            <!-- Logo -->
+            <div class="sd-auth-logo">
+                <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
+                <h2>SecureDesk</h2>
+                <p>Connectez-vous à votre compte</p>
+            </div>
+
+            <!-- Message de succès après inscription -->
+            <div th:if="${param.registered}" class="sd-alert sd-alert-success">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Inscription réussie ! Vous pouvez maintenant vous connecter.</span>
+            </div>
+
+            <!-- Message d'erreur d'authentification -->
+            <div th:if="${param.error}" class="sd-alert sd-alert-danger">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Identifiants incorrects. Veuillez réessayer.</span>
+            </div>
+
+            <!-- Message de déconnexion réussie -->
+            <div th:if="${param.logout}" class="sd-alert sd-alert-info">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>Déconnexion réussie.</span>
+            </div>
+
+            <!-- Formulaire de connexion -->
+            <form th:action="@{/login}" method="post">
+                <div class="sd-form-group">
+                    <label for="username" class="sd-form-label">
+                        <i class="bi bi-person"></i> Nom d'utilisateur
+                    </label>
+                    <input type="text" id="username" name="username"
+                           class="sd-form-control" placeholder="Votre nom d'utilisateur"
+                           required autofocus>
+                </div>
+
+                <div class="sd-form-group">
+                    <label for="password" class="sd-form-label">
+                        <i class="bi bi-lock"></i> Mot de passe
+                    </label>
+                    <input type="password" id="password" name="password"
+                           class="sd-form-control" placeholder="Votre mot de passe"
+                           required>
+                </div>
+
+                <div class="sd-form-group">
+                    <div class="sd-form-check">
+                        <input type="checkbox" id="rememberMe" name="remember-me">
+                        <label for="rememberMe">Se souvenir de moi</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="sd-btn sd-btn-primary sd-btn-block sd-btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                </button>
+            </form>
+
+            <div class="sd-auth-footer">
+                Pas encore de compte ?
+                <a th:href="@{/register}">Créer un compte</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Theme script -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<!-- Topbar -->
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU ======================== -->
+<div class="sd-main">
+    <div class="sd-content">
+
+        <!-- Page header -->
+        <div class="sd-page-header">
+            <h1 class="sd-page-title"><i class="bi bi-people-fill"></i> Gestion des Utilisateurs</h1>
+            <p class="sd-page-subtitle">Gérez les comptes utilisateurs, agents et administrateurs</p>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${successMessage}" class="sd-alert sd-alert-success">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${successMessage}">Succès</span>
+            <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        <div th:if="${errorMessage}" class="sd-alert sd-alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${errorMessage}">Erreur</span>
+            <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+
+        <!-- Table Card -->
+        <div class="sd-card">
+            <div class="sd-card-header">
+                <span>Liste des utilisateurs</span>
+                <span class="sd-badge sd-badge-in-progress" th:text="${users != null} ? ${users.size()} + ' utilisateurs' : '0'">0</span>
+            </div>
+            <div class="sd-card-body" style="padding: 0;">
+                <div th:if="${users != null and !users.isEmpty()}" style="overflow-x: auto;">
+                    <table class="sd-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Utilisateur</th>
+                                <th>Email</th>
+                                <th>Rôle</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="u : ${users}">
+                                <td th:text="${u.id}">1</td>
+                                <td>
+                                    <div class="sd-table-user">
+                                        <div class="sd-table-avatar"
+                                             th:text="${#strings.toUpperCase(#strings.substring(u.fullName, 0, 1))}">A</div>
+                                        <div class="sd-table-user-info">
+                                            <div class="sd-table-user-name" th:text="${u.fullName}">Nom</div>
+                                            <div class="sd-table-user-role" th:text="'@' + ${u.username}">@user</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td th:text="${u.email}">email@exemple.fr</td>
+                                <td>
+                                    <span class="sd-badge"
+                                          th:classappend="${u.role.name() == 'ROLE_ADMIN'} ? 'sd-badge-admin' :
+                                                          (${u.role.name() == 'ROLE_AGENT'} ? 'sd-badge-agent' : 'sd-badge-client')"
+                                          th:text="${u.role.name() == 'ROLE_ADMIN'} ? 'Admin' :
+                                                    (${u.role.name() == 'ROLE_AGENT'} ? 'Agent' : 'Client')">
+                                        Rôle
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${u.active}" class="sd-badge sd-badge-active">
+                                        <i class="bi bi-check-circle-fill"></i>&nbsp;Actif
+                                    </span>
+                                    <span th:unless="${u.active}" class="sd-badge sd-badge-inactive">
+                                        <i class="bi bi-x-circle-fill"></i>&nbsp;Inactif
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <a th:href="@{/admin/users/{id}/edit(id=${u.id})}"
+                                           class="sd-btn sd-btn-outline sd-btn-sm">
+                                            <i class="bi bi-pencil"></i> Modifier
+                                        </a>
+                                        <form th:action="@{/admin/users/{id}/delete(id=${u.id})}"
+                                              method="post" class="inline-form"
+                                              onclick="return confirm('Êtes-vous sûr de vouloir désactiver cet utilisateur ?');">
+                                            <button type="submit" class="sd-btn sd-btn-danger sd-btn-sm">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div th:if="${users == null or users.isEmpty()}" class="sd-empty">
+                    <i class="bi bi-people"></i>
+                    <p>Aucun utilisateur trouvé.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sd-footer">
+            &copy; 2024 SecureDesk &mdash; Projet DevSecOps
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('nav-users');
+        if (el) el.classList.add('active');
+    });
+</script>
+</body>
+</html>

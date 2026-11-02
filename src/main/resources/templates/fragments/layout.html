@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureDesk</title>
+    <!-- Google Fonts — Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- CSS personnalisé -->
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- ======================== SIDEBAR (fragment) ======================== -->
+<aside th:fragment="sidebar" class="sd-sidebar" id="sidebar">
+    <!-- Brand -->
+    <div class="sd-sidebar-brand">
+        <div class="brand-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <div>
+            <span class="brand-text">SecureDesk</span>
+            <span class="brand-sub">DevSecOps HelpDesk</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <ul class="sd-nav">
+        <!-- Section principale -->
+        <li class="sd-nav-section">Principal</li>
+
+        <li class="sd-nav-item">
+            <a th:href="@{/dashboard}" class="sd-nav-link" id="nav-dashboard">
+                <i class="bi bi-grid-1x2-fill"></i> Tableau de bord
+            </a>
+        </li>
+
+        <li class="sd-nav-item">
+            <a th:href="@{/tickets}" class="sd-nav-link" id="nav-tickets">
+                <i class="bi bi-ticket-detailed-fill"></i> Tickets
+            </a>
+        </li>
+
+        <li class="sd-nav-item" sec:authorize="hasRole('CLIENT')">
+            <a th:href="@{/tickets/create}" class="sd-nav-link" id="nav-create">
+                <i class="bi bi-plus-circle-fill"></i> Nouveau Ticket
+            </a>
+        </li>
+
+        <!-- Section Administration -->
+        <li class="sd-nav-section" sec:authorize="hasRole('ADMIN')">Administration</li>
+
+        <li class="sd-nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/dashboard}" class="sd-nav-link" id="nav-admin-dash">
+                <i class="bi bi-speedometer2"></i> Vue d'ensemble
+            </a>
+        </li>
+
+        <li class="sd-nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/users}" class="sd-nav-link" id="nav-users">
+                <i class="bi bi-people-fill"></i> Utilisateurs
+            </a>
+        </li>
+
+        <li class="sd-nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/categories}" class="sd-nav-link" id="nav-categories">
+                <i class="bi bi-tags-fill"></i> Catégories
+            </a>
+        </li>
+
+        <!-- Section Agent -->
+        <li class="sd-nav-section" sec:authorize="hasRole('AGENT')">Support</li>
+
+        <li class="sd-nav-item" sec:authorize="hasRole('AGENT')">
+            <a th:href="@{/agent/dashboard}" class="sd-nav-link" id="nav-agent-dash">
+                <i class="bi bi-headset"></i> Mon espace
+            </a>
+        </li>
+
+        <!-- Section Paramètres -->
+        <li class="sd-nav-section">Compte</li>
+
+        <li class="sd-nav-item">
+            <a th:href="@{/profile}" class="sd-nav-link" id="nav-profile">
+                <i class="bi bi-person-circle"></i> Mon Profil
+            </a>
+        </li>
+
+        <li class="sd-nav-item">
+            <a href="#" class="sd-nav-link" onclick="document.getElementById('logoutForm').submit(); return false;">
+                <i class="bi bi-box-arrow-left"></i> Déconnexion
+            </a>
+        </li>
+    </ul>
+
+    <!-- Logout form (hidden) -->
+    <form th:action="@{/logout}" method="post" id="logoutForm" style="display:none;"></form>
+</aside>
+
+<!-- ======================== TOPBAR (fragment) ======================== -->
+<header th:fragment="topbar" class="sd-topbar" id="topbar">
+    <div class="sd-topbar-greeting">
+        Bonjour, <span sec:authentication="name">utilisateur</span> 👋
+    </div>
+    <div class="sd-topbar-actions">
+        <!-- Search -->
+        <a th:href="@{/tickets/search?query=}" class="sd-topbar-btn" title="Rechercher">
+            <i class="bi bi-search"></i>
+        </a>
+        <!-- Theme Toggle -->
+        <button class="sd-topbar-btn theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+            <i class="bi bi-moon-fill"></i>
+            <i class="bi bi-sun-fill"></i>
+        </button>
+        <!-- User dropdown -->
+        <a th:href="@{/profile}" class="sd-user-dropdown">
+            <div class="sd-user-avatar">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <span class="sd-user-name" sec:authentication="name">utilisateur</span>
+        </a>
+    </div>
+</header>
+
+<!-- ======================== MOBILE TOGGLE ======================== -->
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+</button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU PRINCIPAL (fragment) ======================== -->
+<main class="sd-main" th:fragment="content">
+    <div class="sd-content">
+        <p>Contenu par défaut</p>
+    </div>
+</main>
+
+<!-- ======================== SCRIPTS ======================== -->
+<script th:fragment="scripts">
+    // ── Dark mode toggle ──
+    function toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('sd-theme', next);
+    }
+
+    // ── Apply saved theme on load ──
+    (function() {
+        const saved = localStorage.getItem('sd-theme');
+        if (saved) {
+            document.documentElement.setAttribute('data-theme', saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+
+    // ── Mobile sidebar toggle ──
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    // ── Auto-dismiss alerts after 5s ──
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.sd-alert').forEach(function(alert) {
+            setTimeout(function() {
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                alert.style.transition = 'all 0.3s ease';
+                setTimeout(function() { alert.remove(); }, 300);
+            }, 5000);
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Spring Boot
+spring-shell.log
+
+# Compiled
+*.class
+
+# Package
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# Environment
+.env
+*.env
+

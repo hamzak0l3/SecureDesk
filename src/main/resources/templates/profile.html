@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar & Topbar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU ======================== -->
+<div class="sd-main">
+    <div class="sd-content">
+
+        <div style="max-width: 800px; margin: 0 auto;">
+
+            <!-- Page header -->
+            <div class="sd-page-header">
+                <h1 class="sd-page-title"><i class="bi bi-person-circle"></i> Profil Utilisateur</h1>
+                <p class="sd-page-subtitle">Consultez vos informations personnelles et sécurisez votre compte</p>
+            </div>
+
+            <!-- Flash messages -->
+            <div th:if="${successMessage}" class="sd-alert sd-alert-success">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${successMessage}">Succès</span>
+                <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+            </div>
+            <div th:if="${errorMessage}" class="sd-alert sd-alert-danger">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${errorMessage}">Erreur</span>
+                <button class="sd-alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+            </div>
+
+            <!-- User Info Card -->
+            <div class="sd-card mb-24">
+                <div class="sd-card-header">
+                    <span>Informations Générales</span>
+                </div>
+                <div class="sd-card-body">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                        <div class="sd-table-avatar" style="width: 64px; height: 64px; font-size: 24px;"
+                             th:text="${#strings.toUpperCase(#strings.substring(user.fullName, 0, 1))}">U</div>
+                        <div>
+                            <h2 style="margin: 0; font-size: 20px; color: var(--text-heading);" th:text="${user.fullName}">Nom Prénom</h2>
+                            <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 14px;" th:text="'@' + ${user.username}">@username</p>
+                        </div>
+                        <div style="margin-left: auto;">
+                            <span class="sd-badge"
+                                  th:classappend="${user.role.name() == 'ROLE_ADMIN'} ? 'sd-badge-admin' :
+                                                  (${user.role.name() == 'ROLE_AGENT'} ? 'sd-badge-agent' : 'sd-badge-client')"
+                                  th:text="${user.role.name() == 'ROLE_ADMIN'} ? 'Administrateur' :
+                                            (${user.role.name() == 'ROLE_AGENT'} ? 'Agent de Support' : 'Client')">
+                                Rôle
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="sd-info-grid">
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Identifiant unique</div>
+                            <div class="sd-info-value" style="font-family: monospace;" th:text="'#UID-' + ${user.id}">#1</div>
+                        </div>
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Adresse E-mail</div>
+                            <div class="sd-info-value" th:text="${user.email}">user@exemple.com</div>
+                        </div>
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Statut du compte</div>
+                            <div class="sd-info-value">
+                                <span th:if="${user.active}" class="sd-badge sd-badge-active"><i class="bi bi-check-circle-fill"></i> Actif</span>
+                                <span th:unless="${user.active}" class="sd-badge sd-badge-inactive"><i class="bi bi-x-circle-fill"></i> Inactif</span>
+                            </div>
+                        </div>
+                        <div class="sd-info-item">
+                            <div class="sd-info-label">Date d'inscription</div>
+                            <div class="sd-info-value" th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'dd MMMM yyyy') : '—'}">Date</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Change Card -->
+            <div class="sd-card">
+                <div class="sd-card-header">
+                    <span><i class="bi bi-shield-lock-fill text-warning-c"></i> Modification du mot de passe</span>
+                </div>
+                <div class="sd-card-body">
+                    <form th:action="@{/profile/password}" method="post">
+                        <!-- Mot de passe actuel -->
+                        <div class="sd-form-group">
+                            <label for="currentPassword" class="sd-form-label">Mot de passe actuel</label>
+                            <input type="password" id="currentPassword" name="currentPassword"
+                                   class="sd-form-control" placeholder="••••••••" required>
+                        </div>
+
+                        <div class="sd-grid sd-grid-2 mb-20">
+                            <!-- Nouveau mot de passe -->
+                            <div class="sd-form-group" style="margin-bottom: 0;">
+                                <label for="newPassword" class="sd-form-label">Nouveau mot de passe</label>
+                                <input type="password" id="newPassword" name="newPassword"
+                                       class="sd-form-control" placeholder="Minimum 8 caractères" required>
+                            </div>
+
+                            <!-- Confirmation -->
+                            <div class="sd-form-group" style="margin-bottom: 0;">
+                                <label for="confirmNewPassword" class="sd-form-label">Confirmer le mot de passe</label>
+                                <input type="password" id="confirmNewPassword" name="confirmNewPassword"
+                                       class="sd-form-control" placeholder="Retapez le mot de passe" required>
+                            </div>
+                        </div>
+
+                        <div style="text-align: right; margin-top: 24px;">
+                            <button type="submit" class="sd-btn sd-btn-warning">
+                                <i class="bi bi-key-fill"></i> Mettre à jour le mot de passe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="sd-footer">
+            &copy; 2024 SecureDesk &mdash; Projet DevSecOps HelpDesk
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('nav-profile');
+        if (el) el.classList.add('active');
+    });
+</script>
+</body>
+</html>

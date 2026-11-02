@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration — SecureDesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+<!-- Topbar -->
+<div th:replace="~{fragments/layout :: topbar}"></div>
+<!-- Mobile toggle -->
+<button class="sd-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sd-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ======================== CONTENU ======================== -->
+<div class="sd-main">
+    <div class="sd-content">
+
+        <!-- Page header -->
+        <div class="sd-page-header">
+            <h1 class="sd-page-title"><i class="bi bi-speedometer2"></i> Tableau de bord Administration</h1>
+            <p class="sd-page-subtitle">Vue d'ensemble de l'activité SecureDesk</p>
+        </div>
+
+        <!-- ═══ Row 1: Stat Cards ═══ -->
+        <div class="sd-grid sd-grid-4 mb-24">
+            <!-- Total Tickets -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon primary"><i class="bi bi-ticket-detailed-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.totalTickets}">0</div>
+                    <div class="sd-stat-label">Total Tickets</div>
+                </div>
+            </div>
+            <!-- Utilisateurs -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon purple"><i class="bi bi-people-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.totalUsers}">0</div>
+                    <div class="sd-stat-label">Utilisateurs</div>
+                </div>
+            </div>
+            <!-- Agents -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon info"><i class="bi bi-headset"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.totalAgents}">0</div>
+                    <div class="sd-stat-label">Agents</div>
+                </div>
+            </div>
+            <!-- Catégories -->
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon warning"><i class="bi bi-tags-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.totalCategories}">0</div>
+                    <div class="sd-stat-label">Catégories</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Row 2: Donut Chart + Priority Bars ═══ -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+
+            <!-- Ticket Status (Donut Chart) -->
+            <div class="sd-card">
+                <div class="sd-card-header">
+                    <span>Statut des Tickets</span>
+                </div>
+                <div class="sd-card-body">
+                    <div class="sd-donut-wrap">
+                        <!--
+                            Donut chart via conic-gradient.
+                            We compute segment percentages from stats.
+                        -->
+                        <div class="sd-donut" id="donutChart"
+                             th:attr="data-open=${stats.openTickets},
+                                      data-progress=${stats.inProgressTickets},
+                                      data-resolved=${stats.resolvedTickets},
+                                      data-closed=${stats.closedTickets}">
+                            <div class="sd-donut-center">
+                                <div class="sd-donut-center-value" th:text="${stats.totalTickets}">0</div>
+                                <div class="sd-donut-center-label">Total</div>
+                            </div>
+                        </div>
+                        <div class="sd-donut-legend">
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#06b6d4;"></span>
+                                Ouvert
+                            </div>
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#3b82f6;"></span>
+                                En cours
+                            </div>
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#22c55e;"></span>
+                                Résolu
+                            </div>
+                            <div class="sd-legend-item">
+                                <span class="sd-legend-dot" style="background:#94a3b8;"></span>
+                                Fermé
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticket Priority (Progress Bars) -->
+            <div class="sd-card">
+                <div class="sd-card-header">
+                    <span>Répartition par Priorité</span>
+                </div>
+                <div class="sd-card-body" style="display:flex; flex-direction:column; justify-content:center;">
+                    <div class="sd-progress-item" id="priorityHigh">
+                        <span class="sd-progress-label">Haute</span>
+                        <div class="sd-progress-bar">
+                            <div class="sd-progress-fill warning" style="width: 0%;" id="barHigh"></div>
+                        </div>
+                        <span class="sd-progress-value" id="valHigh">0</span>
+                    </div>
+                    <div class="sd-progress-item" id="priorityMedium">
+                        <span class="sd-progress-label">Moyenne</span>
+                        <div class="sd-progress-bar">
+                            <div class="sd-progress-fill primary" style="width: 0%;" id="barMedium"></div>
+                        </div>
+                        <span class="sd-progress-value" id="valMedium">0</span>
+                    </div>
+                    <div class="sd-progress-item" id="priorityLow">
+                        <span class="sd-progress-label">Basse</span>
+                        <div class="sd-progress-bar">
+                            <div class="sd-progress-fill success" style="width: 0%;" id="barLow"></div>
+                        </div>
+                        <span class="sd-progress-value" id="valLow">0</span>
+                    </div>
+                    <div class="sd-progress-item" id="priorityCritical">
+                        <span class="sd-progress-label">Critique</span>
+                        <div class="sd-progress-bar">
+                            <div class="sd-progress-fill danger" style="width: 0%;" id="barCritical"></div>
+                        </div>
+                        <span class="sd-progress-value" id="valCritical">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Row 3: Status Detail Cards ═══ -->
+        <div class="sd-grid sd-grid-4 mb-24">
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon info"><i class="bi bi-envelope-open-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.openTickets}">0</div>
+                    <div class="sd-stat-label">Ouverts</div>
+                </div>
+            </div>
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon primary"><i class="bi bi-hourglass-split"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.inProgressTickets}">0</div>
+                    <div class="sd-stat-label">En Cours</div>
+                </div>
+            </div>
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon success"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.resolvedTickets}">0</div>
+                    <div class="sd-stat-label">Résolus</div>
+                </div>
+            </div>
+            <div class="sd-stat-card">
+                <div class="sd-stat-icon secondary"><i class="bi bi-lock-fill"></i></div>
+                <div class="sd-stat-info">
+                    <div class="sd-stat-value" th:text="${stats.closedTickets}">0</div>
+                    <div class="sd-stat-label">Fermés</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Quick Actions ═══ -->
+        <div class="sd-section-header">
+            <h3 class="sd-section-title"><i class="bi bi-lightning-fill"></i> Accès rapide</h3>
+        </div>
+        <div class="sd-grid sd-grid-3 mb-24">
+            <a th:href="@{/admin/users}" class="sd-quick-action">
+                <i class="bi bi-people-fill text-primary-c"></i>
+                <span>Gérer les utilisateurs</span>
+            </a>
+            <a th:href="@{/admin/categories}" class="sd-quick-action">
+                <i class="bi bi-tags-fill text-success-c"></i>
+                <span>Gérer les catégories</span>
+            </a>
+            <a th:href="@{/tickets}" class="sd-quick-action">
+                <i class="bi bi-ticket-detailed-fill text-info-c"></i>
+                <span>Voir tous les tickets</span>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="sd-footer">
+            &copy; 2024 SecureDesk &mdash; Projet DevSecOps
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    // ── Donut Chart ──
+    document.addEventListener('DOMContentLoaded', function() {
+        var donut = document.getElementById('donutChart');
+        if (donut) {
+            var open = parseInt(donut.getAttribute('data-open')) || 0;
+            var progress = parseInt(donut.getAttribute('data-progress')) || 0;
+            var resolved = parseInt(donut.getAttribute('data-resolved')) || 0;
+            var closed = parseInt(donut.getAttribute('data-closed')) || 0;
+            var total = open + progress + resolved + closed;
+
+            if (total > 0) {
+                var p1 = (open / total) * 100;
+                var p2 = p1 + (progress / total) * 100;
+                var p3 = p2 + (resolved / total) * 100;
+                donut.style.background = 'conic-gradient(#06b6d4 0% ' + p1 + '%, #3b82f6 ' + p1 + '% ' + p2 + '%, #22c55e ' + p2 + '% ' + p3 + '%, #94a3b8 ' + p3 + '% 100%)';
+            } else {
+                donut.style.background = 'conic-gradient(#e2e8f0 0% 100%)';
+            }
+        }
+
+        // ── Active nav link ──
+        var navAdminDash = document.getElementById('nav-admin-dash');
+        if (navAdminDash) navAdminDash.classList.add('active');
+    });
+</script>
+
+<!-- Highlight active nav -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('nav-admin-dash');
+        if (el) el.classList.add('active');
+    });
+</script>
+</body>
+</html>

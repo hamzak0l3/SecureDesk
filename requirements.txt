@@ -1,0 +1,36 @@
+# ==============================================================================
+# SecureDesk - Prérequis Système & Dépendances
+# ==============================================================================
+# Note : SecureDesk est une application Java 21 / Spring Boot 3.2.2.
+# Ses dépendances logicielles (bibliothèques) sont gérées via pom.xml (Maven).
+# Ce fichier récapitule l'ensemble des dépendances et outils requis pour l'exécution.
+# ==============================================================================
+
+# --- Runtimes Système Requis ---
+openjdk>=21.0.0          # JDK 21 LTS (Eclipse Adoptium Temurin 21)
+maven>=3.9.0             # Outil de build et gestionnaire de dépendances Java
+
+# --- Base de Données ---
+postgresql>=16.0         # Moteur de base de données relationnelle (port 5432)
+# Note : Pour un test rapide immédiat, un profil H2 en mémoire est également configuré.
+
+# --- Dépendances Applicatives Principales (Maven pom.xml) ---
+# org.springframework.boot:spring-boot-starter-web:3.2.2
+# org.springframework.boot:spring-boot-starter-thymeleaf:3.2.2
+# org.springframework.boot:spring-boot-starter-security:3.2.2
+# org.springframework.boot:spring-boot-starter-data-jpa:3.2.2
+# org.springframework.boot:spring-boot-starter-validation:3.2.2
+# org.springframework.boot:spring-boot-starter-actuator:3.2.2
+# org.postgresql:postgresql:42.6.0
+# org.thymeleaf.extras:thymeleaf-extras-springsecurity6:3.1.2.RELEASE
+# org.projectlombok:lombok:1.18.30
+# com.h2database:h2:2.2.224 (profil test / dev local sans postgres)
+
+# --- Outils DevSecOps (Phases suivantes) ---
+# docker>=24.0.0
+# gitlab-runner>=16.0.0
+# semgrep>=1.60.0
+# gitleaks>=8.18.0
+# trivy>=0.48.0
+# zaproxy>=2.14.0
+
