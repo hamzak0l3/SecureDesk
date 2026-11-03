@@ -157,15 +157,7 @@ public class TicketController {
             return "redirect:/tickets";
         }
 
-        // Contrôle d'accès : un client ne peut consulter que ses propres tickets
-        if (currentUser.getRole() == Role.ROLE_CLIENT
-                && !ticket.getCreatedBy().getId().equals(currentUser.getId())) {
-            log.warn("Accès refusé : l'utilisateur {} tente d'accéder au ticket {}",
-                    currentUser.getUsername(), id);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Vous n'avez pas l'autorisation de consulter ce ticket.");
-            return "redirect:/tickets";
-        }
+        // [V3] IDOR : le ticket est chargé par identifiant sans vérifier le propriétaire.
 
         List<Comment> comments = commentService.findByTicket(ticket);
         List<User> agents = userService.findByRole(Role.ROLE_AGENT);

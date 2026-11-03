@@ -86,9 +86,12 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register",
                         "/css/**", "/js/**", "/images/**", "/error")
                     .permitAll()
-                // Section administration : ROLE_ADMIN uniquement
+                // [V7] Actuator exposé sans authentification
+                .requestMatchers("/actuator/**")
+                    .permitAll()
+                // [V4] /admin/** n'est pas restreint au rôle ADMIN (menu masqué seulement)
                 .requestMatchers("/admin/**")
-                    .hasRole("ADMIN")
+                    .authenticated()
                 // Section agent : ROLE_AGENT ou ROLE_ADMIN
                 .requestMatchers("/agent/**")
                     .hasAnyRole("AGENT", "ADMIN")

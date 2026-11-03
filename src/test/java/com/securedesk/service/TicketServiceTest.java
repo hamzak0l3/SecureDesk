@@ -5,6 +5,8 @@ import com.securedesk.entity.*;
 import com.securedesk.repository.CategoryRepository;
 import com.securedesk.repository.TicketRepository;
 import com.securedesk.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -34,6 +38,9 @@ class TicketServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private TicketService ticketService;
@@ -129,16 +136,18 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("Recherche contextuelle : les clients ne recherchent que dans leurs tickets")
-    void shouldSearchOnlyWithinClientTickets() {
-        when(ticketRepository.findByCreatedByAndTitleContainingIgnoreCase(client, "VPN"))
-                .thenReturn(List.of(ticket));
+    @DisplayName("V1 : la recherche utilise une requête native concaténée")
+    void shouldSearchWithNativeConcatenatedQuery() {
+        Query nativeQuery = mock(Query.class);
+        when(entityManager.createNativeQuery(any(String.class), eq(Ticket.class)))
+                .thenReturn(nativeQuery);
+        when(nativeQuery.getResultList()).thenReturn(List.of(ticket));
 
         List<Ticket> results = ticketService.search("VPN", client);
 
         assertThat(results).hasSize(1);
-        verify(ticketRepository).findByCreatedByAndTitleContainingIgnoreCase(client, "VPN");
-        verify(ticketRepository, never()).findByTitleContainingIgnoreCase(any());
+        verify(entityManager).createNativeQuery(contains("VPN"), eq(Ticket.class));
+        verify(ticketRepository, never()).findByCreatedByAndTitleContainingIgnoreCase(any(), any());
     }
 }
 

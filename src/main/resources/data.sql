@@ -37,6 +37,11 @@ INSERT INTO users (id, username, password, email, full_name, role, active, creat
 VALUES (3, 'client', '$2a$10$J7aVVMI0sy/M3q8U0UZHhuHolDw0/XNg1Vi0hUm6C43IK3bsdRZ66', 'client@securedesk.fr', 'Client Test', 'ROLE_CLIENT', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
+-- Second client (démonstration IDOR V3)
+INSERT INTO users (id, username, password, email, full_name, role, active, created_at, updated_at)
+VALUES (4, 'client1', '$2a$10$J7aVVMI0sy/M3q8U0UZHhuHolDw0/XNg1Vi0hUm6C43IK3bsdRZ66', 'client1@securedesk.fr', 'Client Test 1', 'ROLE_CLIENT', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
+
 -- Mise à jour des séquences pour éviter les conflits d'ID
 SELECT setval(pg_get_serial_sequence('categories', 'id'), (SELECT MAX(id) FROM categories));
 SELECT setval(pg_get_serial_sequence('users', 'id'), (SELECT MAX(id) FROM users));

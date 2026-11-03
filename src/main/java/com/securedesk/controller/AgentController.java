@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
 import java.util.List;
@@ -71,5 +72,18 @@ public class AgentController {
         model.addAttribute("closedCount", closedCount);
 
         return "agent/dashboard";
+    }
+
+    /**
+     * [V1] Recherche agent : même requête SQL concaténée que /tickets/search.
+     */
+    @GetMapping("/search")
+    public String search(@RequestParam("query") String query, Model model, Principal principal) {
+        User currentUser = userService.findByUsername(principal.getName());
+        log.info("Recherche agent (V1) '{}' par {}", query, currentUser.getUsername());
+        model.addAttribute("tickets", ticketService.searchTickets(query));
+        model.addAttribute("user", currentUser);
+        model.addAttribute("searchQuery", query);
+        return "ticket/list";
     }
 }

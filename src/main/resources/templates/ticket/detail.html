@@ -96,7 +96,8 @@
                                         <span class="sd-comment-date"
                                               th:text="${#temporals.format(comment.createdAt, 'dd/MM/yyyy à HH:mm')}">Date</span>
                                     </div>
-                                    <div class="sd-comment-content" th:text="${comment.content}">Commentaire...</div>
+                                    <!-- [V2] Stored XSS : th:utext n'échappe pas le HTML -->
+                                    <div class="sd-comment-content" th:utext="${comment.content}">Commentaire...</div>
                                 </div>
                             </div>
                         </div>

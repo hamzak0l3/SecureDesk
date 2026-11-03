@@ -56,10 +56,11 @@ class SecurityAccessTest {
 
     @Test
     @WithMockUser(username = "client_user", roles = {"CLIENT"})
-    @DisplayName("Contrôle RBAC : ROLE_CLIENT n'a pas accès à /admin/** (403 Forbidden)")
-    void clientCannotAccessAdminSection() throws Exception {
+    @DisplayName("V4 : ROLE_CLIENT n'est plus bloqué par le filtre /admin/**")
+    void clientIsNotBlockedFromAdminBySecurityFilter() throws Exception {
+        // AdminController n'est pas chargé dans ce slice : 404 et non 403.
         mockMvc.perform(get("/admin/dashboard"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -72,10 +73,10 @@ class SecurityAccessTest {
 
     @Test
     @WithMockUser(username = "agent_user", roles = {"AGENT"})
-    @DisplayName("Contrôle RBAC : ROLE_AGENT n'a pas accès à /admin/** (403 Forbidden)")
-    void agentCannotAccessAdminSection() throws Exception {
+    @DisplayName("V4 : ROLE_AGENT n'est plus bloqué par le filtre /admin/**")
+    void agentIsNotBlockedFromAdminBySecurityFilter() throws Exception {
         mockMvc.perform(get("/admin/dashboard"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 }
 

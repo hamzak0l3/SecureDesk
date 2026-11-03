@@ -8,6 +8,7 @@ import com.securedesk.entity.User;
 import com.securedesk.repository.CategoryRepository;
 import com.securedesk.repository.TicketRepository;
 import com.securedesk.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final EntityManager entityManager;
 
     /**
      * Récupère tous les tickets triés par date de création décroissante.
@@ -225,27 +227,25 @@ public class TicketService {
     }
 
     /**
-     * Recherche des tickets par titre (recherche partielle, insensible à la casse).
+     * Recherche des tickets par titre.
      *
-     * @param query le terme de recherche
-     * @return la liste des tickets correspondants
+     * [V1] Concaténation SQL volontaire — laboratoire Phase 3 uniquement.
+     * Ne pas réutiliser ce motif hors environnement académique contrôlé.
      */
     @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
     public List<Ticket> searchTickets(String query) {
-        log.debug("Recherche de tickets avec le terme : {}", query);
-        return ticketRepository.findByTitleContainingIgnoreCase(query);
+        String sql = "SELECT * FROM tickets WHERE title LIKE '%" + query + "%' OR description LIKE '%" + query + "%'";
+        log.debug("Recherche SQL native (V1) : {}", sql);
+        return entityManager.createNativeQuery(sql, Ticket.class).getResultList();
     }
 
     /**
-     * Recherche des tickets selon le rôle et l'utilisateur connecté.
+     * Recherche globale sans filtrage par rôle (V1).
      */
     @Transactional(readOnly = true)
     public List<Ticket> search(String query, User user) {
-        if (user.getRole() == Role.ROLE_CLIENT) {
-            return ticketRepository.findByCreatedByAndTitleContainingIgnoreCase(user, query);
-        } else if (user.getRole() == Role.ROLE_AGENT) {
-            return ticketRepository.findByAssignedToAndTitleContainingIgnoreCase(user, query);
-        }
+        log.debug("Recherche (V1) par {} — aucun filtrage d'autorisation appliqué", user.getUsername());
         return searchTickets(query);
     }
 
